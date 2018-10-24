@@ -650,6 +650,23 @@ void checkpayload(uint8_t * payload, bool mqtt = false, uint8_t num = 0) {
   }
 }
 
+void checkpayloadbin(uint8_t * payload, bool mqtt = false, uint8_t num = 0, size_t lenght = 0) {
+  // R ==> Set all LEDs in raw mode
+  if (payload[0] == 'B') {
+    lenght = (lenght - 1) / 3;
+    if(lenght > strip.numPixels()) {
+      lenght = strip.numPixels();
+    }
+    for(int i = 0; i < lenght; i++) {
+      strip.setPixelColor(i, payload[i*3+1], payload[i*3+2], payload[i*3+3]);
+    }
+    strip.show();
+    if (mqtt != true)  {
+      webSocket.sendTXT(num, "OK");
+    }
+  }
+}
+
 // ***************************************************************************
 // WS request handlers
 // ***************************************************************************
@@ -666,6 +683,10 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
         // send message to client
         webSocket.sendTXT(num, "Connected");
       }
+      break;
+
+    case WStype_BIN:
+      checkpayloadbin(payload, false, num, lenght);
       break;
 
     case WStype_TEXT:
